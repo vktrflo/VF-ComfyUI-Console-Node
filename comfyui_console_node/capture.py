@@ -209,4 +209,47 @@ def reset_for_tests() -> None:
 
 
 # --- logging bridge -------------------------------------------------------
-# CaptureHandler / attach_logging are implemented in Task 6.
+
+def _record_level(record: logging.LogRecord) -> str:
+    if record.levelno >= logging.ERROR:
+        return "ERROR"
+    if record.levelno >= logging.WARNING:
+        return "WARN"
+    return "INFO"
+
+
+class CaptureHandler(logging.Handler):
+    """Funnels logging records into the console-node pipeline."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        global _last_record
+        if record is _last_record:
+            return  # same record delivered via more than one logger
+        _last_record = record
+        try:
+            text = self.format(record)
+        except Exception:
+            return
+        if not isinstance(text, str):
+            return
+        source = "internal" if getattr(_internal, "active", False) else "external"
+        level = _record_level(record)
+        for raw in text.split("\n"):
+            raw = raw.rstrip("\r")
+            if "\r" in raw:
+                raw = raw.split("\r")[-1]
+            _publish(level, raw, source, via_logging=True)
+
+
+def attach_logging() -> bool:
+    """Attach the capture handler to root and 'comfy' exactly once."""
+    global _logging_attached
+    with _publish_lock:
+        if _logging_attached:
+            return False
+        _logging_attached = True
+    handler = CaptureHandler(level=logging.DEBUG)
+    for logger in (logging.getLogger(), logging.getLogger("comfy")):
+        logger.addHandler(handler)
+        _attached_handlers.append((logger, handler))
+    return True
