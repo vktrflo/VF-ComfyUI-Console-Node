@@ -1,7 +1,7 @@
 """Copy the pack into ComfyUI custom_nodes directories.
 
 Usage: python tools/deploy.py [target_dir ...]
-Defaults to the VectorFlow custom_nodes directory used by the local setup.
+Defaults to the SMALL_DESKTOP instance's custom_nodes directory.
 """
 
 import shutil
@@ -11,7 +11,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 PACK_NAME = "ComfyUI-Console-Node"
 SKIP_NAMES = {"__pycache__", ".git", ".venv", "docs", "tests", "tools", ".pytest_cache"}
-DEFAULT_TARGETS = [Path("D:/VectorFlow/custom_nodes")]
+DEFAULT_TARGETS = [Path("E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes")]
 
 
 def deploy(target: Path) -> Path:

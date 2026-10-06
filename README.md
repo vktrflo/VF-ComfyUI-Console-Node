@@ -8,7 +8,7 @@ and keep a rotating copy on disk for grep.
 
 Copy this repository into `<ComfyUI>/custom_nodes/ComfyUI-Console-Node` (or
 run `python tools/deploy.py [target]`, default target
-`D:/VectorFlow/custom_nodes`). Restart ComfyUI.
+`E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes`). Restart ComfyUI.
 
 ## Use
 

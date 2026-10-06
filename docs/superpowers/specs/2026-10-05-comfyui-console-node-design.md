@@ -37,7 +37,7 @@ A ComfyUI custom-node pack that mirrors the ComfyUI Python server's stdout/stder
 
 ## Architecture
 
-Three components in one Python package, deployed under `D:/VectorFlow/custom_nodes/ComfyUI-Console-Node` (and the ComfyUI portable install per the user's standing deploy convention).
+Three components in one Python package, deployed under `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/ComfyUI-Console-Node`.
 
 1. **`capture.py` — StreamProxy + logging bridge + level classification**
    - Installs Python `StreamProxy` wrappers over `sys.stdout` and `sys.stderr` exactly once (idempotent via module-global `_installed`).
@@ -185,7 +185,7 @@ ComfyUI-Console-Node/
 │   ├── test_nodes.py, test_routes.py, test_routes_bootstrap.py, test_smoke.py,
 │   └── test_state.py, test_storage.py
 └── tools/
-    └── deploy.py                  # copy the pack into D:/VectorFlow/custom_nodes
+    └── deploy.py                  # copy the pack into E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes
 ```
 
 ## Dependencies
@@ -204,5 +204,5 @@ ComfyUI-Console-Node/
 
 ## Deployment
 
-- After implementation: deploy to `D:/VectorFlow/custom_nodes/ComfyUI-Console-Node` **and** the ComfyUI portable install per the user's standing convention (both VFUtils custom_nodes locations).
+- After implementation: deploy to `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/ComfyUI-Console-Node` (the SMALL_DESKTOP instance; the earlier `D:/VectorFlow/custom_nodes` location is retired).
 - `git init` happens at `E:\projects\ComfyUI-Console-Node\` per the user's instruction; no remote is set.

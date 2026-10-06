@@ -25,4 +25,4 @@ ROUTE_PREFIX = "/console_node"
 ROUTE_STREAM = ROUTE_PREFIX + "/log/stream"
 HEARTBEAT_SECONDS = 15
 
-DEFAULT_DEPLOY_TARGET = Path("D:/VectorFlow/custom_nodes")
+DEFAULT_DEPLOY_TARGET = Path("E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes")

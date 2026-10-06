@@ -2244,6 +2244,7 @@ Implemented inline (not via subagents). Three deviations from the code above; th
 3. **Pass-through test** (Task 5): `test_proxy_passes_through_to_original` stubs `storage.append` so the one-time "disk log unavailable" notice cannot leak into the asserted stream.
 4. **Progress bars stream live** (post-smoke fix): `StreamProxy` emits `\r` segments immediately with `cr=True`; `state.enqueue` replaces the previous open `cr` ring entry; `storage.append` skips `cr` lines; the widget replaces the open row in place. ANSI codes stripped at capture. Verified against the live server: tqdm sampling bars update during execution, no longer only at 100%. Follow-up: open `\r` states now emit on every write with per-state dedupe (zero lag, covering `\r`-first tqdm writes and `\r`-last writes) — the first cut emitted each state one refresh late.
 5. **Widget sizing** (post-smoke fix): the `computeSize` override was removed — it made the widget fixed-height and left a ~64 px gap at the bottom. The DOM widget is now growable (`getMinHeight: () => 160`), filling remaining node height via the frontend's `distributeSpace` layout (semantics confirmed from frontend 1.39.19 source maps).
+6. **Deploy target moved** (post-smoke): the SMALL_DESKTOP instance's custom_nodes directory is now `E:\comfyui_instances\SMALL_DESKTOP\ComfyUI\custom_nodes` (was `D:\VectorFlow\custom_nodes`); `tools/deploy.py`, `README.md`, `constants.py`, and the spec were updated. Earlier paths in this plan are historical.
 
 ### Task 12 status
 
