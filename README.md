@@ -38,6 +38,13 @@ canvas; it does not need to be connected to anything.
 | `COMFYUI_CONSOLE_NODE_MAX_BACKUPS` | 3 | rotated files kept |
 | `COMFYUI_CONSOLE_NODE_HIDE_INTERNAL` | 1 | hide internal lines by default |
 
+## Behavior notes
+
+- In-place updates (`\r`, e.g. tqdm progress bars) stream live and **replace
+  the previous line** in the viewer — the bar you see is the current state,
+  not a wall of updates. The disk log keeps only finished lines.
+- ANSI escape codes from the console (colors, links) are stripped.
+
 ## Limitations
 
 - Lines printed before this pack loads are only recovered on ComfyUI builds

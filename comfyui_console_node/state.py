@@ -24,9 +24,13 @@ DROP_NOTICE = "console-node: viewer fell behind; oldest buffered lines were drop
 OVERFLOW_NOTICE = "console-node: ring buffer is full; oldest lines are being dropped"
 
 
-def build_line(level: str, text: str, source: str = "external") -> dict:
-    """Create a LogLine dict: {ts, level, source, text}."""
-    return {"ts": time.time(), "level": level, "source": source, "text": text}
+def build_line(level: str, text: str, source: str = "external", cr: bool = False) -> dict:
+    """Create a LogLine dict: {ts, level, source, text, cr}.
+
+    ``cr`` marks an in-place terminal update (progress bar): viewers replace
+    the previous ``cr`` line; the disk log keeps only finished lines.
+    """
+    return {"ts": time.time(), "level": level, "source": source, "text": text, "cr": cr}
 
 
 @dataclass
@@ -72,7 +76,11 @@ def enqueue(line: dict) -> None:
         if (not _ring_overflow_noticed) and _ring.maxlen is not None and len(_ring) >= _ring.maxlen:
             _ring_overflow_noticed = True
             notice = build_line("WARN", OVERFLOW_NOTICE, source="internal")
-        _ring.append(line)
+        if _ring and _ring[-1].get("cr"):
+            # An open in-place update is overwritten, mirroring the terminal.
+            _ring[-1] = line
+        else:
+            _ring.append(line)
         clients = list(_clients)
     loop = _loop
     if loop is None or loop.is_closed():

@@ -27,7 +27,16 @@ _logging_attached = False
 
 ERROR_PATTERN = re.compile(r"\b(error|exception|traceback|critical)\b", re.IGNORECASE)
 WARN_PATTERN = re.compile(r"\b(warn(?:ing)?|deprecat\w*)\b", re.IGNORECASE)
-INFO_PATTERN = re.compile(r"(INFO|DEBUG)\b")
+INFO_PATTERN = re.compile(r"\[?(?:INFO|DEBUG)\]?\b")
+ANSI_CSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+ANSI_OSC = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)")
+
+
+def strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences (colors, OSC links) from console text."""
+    if "\x1b" not in text:
+        return text
+    return ANSI_CSI.sub("", ANSI_OSC.sub("", text))
 
 
 def classify(stream_name: str, text: str) -> str:
@@ -53,7 +62,7 @@ def _direct_write(text: str) -> None:
         pass
 
 
-def _publish(level: str, text: str, source: str, via_logging: bool = False) -> None:
+def _publish(level: str, text: str, source: str, via_logging: bool = False, cr: bool = False) -> None:
     global _disk_failed
     now = time.monotonic()
     with _publish_lock:
@@ -64,7 +73,7 @@ def _publish(level: str, text: str, source: str, via_logging: bool = False) -> N
         last["text"] = text
         last["via"] = "logging" if via_logging else "stream"
         last["when"] = now
-    line = state.build_line(level, text, source)
+    line = state.build_line(level, text, source, cr=cr)
     try:
         storage.append(line)
         if _disk_failed:
@@ -146,19 +155,33 @@ class StreamProxy:
                 return
         with self._buffer_lock:
             self._buffer += text
-            while "\n" in self._buffer:
-                raw, self._buffer = self._buffer.split("\n", 1)
-                self._emit(raw)
-            if "\r" in self._buffer:
-                # Terminal overwrite semantics: keep only the final state.
-                self._buffer = self._buffer.split("\r")[-1]
+            while True:
+                nl = self._buffer.find("\n")
+                cr = self._buffer.find("\r")
+                if nl == -1 and cr == -1:
+                    break
+                if nl != -1 and (cr == -1 or nl < cr):
+                    segment = self._buffer[:nl]
+                    self._buffer = self._buffer[nl + 1:]
+                    self._emit(segment, cr=False)
+                else:
+                    segment = self._buffer[:cr]
+                    self._buffer = self._buffer[cr + 1:]
+                    if self._buffer.startswith("\n"):
+                        # CRLF: the line is finished, not an in-place update.
+                        self._buffer = self._buffer[1:]
+                        self._emit(segment, cr=False)
+                    elif segment:
+                        # Progress-bar style update: emit live; viewers replace
+                        # the previous line for this stream.
+                        self._emit(segment, cr=True)
 
-    def _emit(self, raw: str):
-        text = raw.rstrip("\r")
+    def _emit(self, raw: str, cr: bool = False):
+        text = strip_ansi(raw.rstrip("\r"))
         if "\r" in text:
             text = text.split("\r")[-1]
         source = "internal" if getattr(_internal, "active", False) else "external"
-        _publish(classify(self._stream_name, text), text, source)
+        _publish(classify(self._stream_name, text), text, source, cr=cr)
 
 
 def install_proxy() -> bool:
@@ -235,7 +258,7 @@ class CaptureHandler(logging.Handler):
         source = "internal" if getattr(_internal, "active", False) else "external"
         level = _record_level(record)
         for raw in text.split("\n"):
-            raw = raw.rstrip("\r")
+            raw = strip_ansi(raw.rstrip("\r"))
             if "\r" in raw:
                 raw = raw.split("\r")[-1]
             _publish(level, raw, source, via_logging=True)

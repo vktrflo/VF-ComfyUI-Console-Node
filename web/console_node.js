@@ -40,6 +40,9 @@ function formatTime(ts) {
   }
 }
 
+const ANSI_RE = /\x1b\[[0-9;?]*[ -\/]*[@-~]/g;
+const cleanText = (t) => (typeof t === 'string' && t.includes('\x1b') ? t.replace(ANSI_RE, '') : t);
+
 function createConsoleView(node) {
   injectStyle();
 
@@ -105,6 +108,7 @@ function createConsoleView(node) {
     threshold: THRESHOLDS.ALL,
     regex: null,
     es: null,
+    cr: {},
     root,
     logEl,
   };
@@ -116,22 +120,34 @@ function createConsoleView(node) {
     return true;
   };
 
-  const buildLine = (line) => {
-    const row = document.createElement('div');
-    row.className = 'cn-line';
+  const makeTs = (line) => {
     const ts = document.createElement('span');
     ts.className = 'cn-ts';
     ts.textContent = formatTime(line.ts);
     ts.title = 'click to copy line';
     ts.addEventListener('click', () => {
-      const text = `[${formatTime(line.ts)}] ${line.text}`;
+      const text = `[${formatTime(line.ts)}] ${cleanText(line.text)}`;
       navigator.clipboard?.writeText(text);
     });
+    return ts;
+  };
+
+  const makeBody = (line) => {
     const body = document.createElement('span');
     body.className = 'cn-level-' + (line.level || 'STDOUT');
-    body.textContent = line.text;
-    row.append(ts, body);
+    body.textContent = cleanText(line.text);
+    return body;
+  };
+
+  const makeRow = (line) => {
+    const row = document.createElement('div');
+    row.className = 'cn-line';
+    row.append(makeTs(line), makeBody(line));
     return row;
+  };
+
+  const fillRow = (row, line) => {
+    row.replaceChildren(makeTs(line), makeBody(line));
   };
 
   const stick = () => {
@@ -141,20 +157,50 @@ function createConsoleView(node) {
   const trim = () => {
     while (view.buffer.length > view.maxLines) view.buffer.shift();
     while (logEl.childElementCount > view.maxLines) logEl.removeChild(logEl.firstChild);
+    if (view.cr.row && !view.cr.row.isConnected) view.cr = {};
   };
 
   const appendLine = (line) => {
-    view.buffer.push(line);
+    const buf = view.buffer;
+    const prev = buf.length ? buf[buf.length - 1] : null;
+    const isReplace = !!(prev && prev.cr);
+    if (isReplace) buf[buf.length - 1] = line;
+    else buf.push(line);
     trim();
-    if (view.paused || !passes(line)) return;
-    logEl.appendChild(buildLine(line));
+    if (view.paused) return;
+    const ok = passes(line);
+    if (isReplace && view.cr.entry === prev) {
+      if (ok) {
+        fillRow(view.cr.row, line);
+        view.cr = line.cr ? { entry: line, row: view.cr.row } : {};
+      } else {
+        view.cr.row.remove();
+        view.cr = {};
+      }
+      stick();
+      return;
+    }
+    if (!ok) return;
+    const row = makeRow(line);
+    logEl.appendChild(row);
+    view.cr = line.cr ? { entry: line, row } : {};
     stick();
   };
 
   const rebuild = () => {
     logEl.replaceChildren();
+    view.cr = {};
+    const shown = [];
     for (const line of view.buffer) {
-      if (passes(line)) logEl.appendChild(buildLine(line));
+      const prev = shown.length ? shown[shown.length - 1] : null;
+      if (prev && prev.cr) shown[shown.length - 1] = line;
+      else shown.push(line);
+    }
+    for (const line of shown) {
+      if (!passes(line)) continue;
+      const row = makeRow(line);
+      logEl.appendChild(row);
+      view.cr = line.cr ? { entry: line, row } : {};
     }
     stick();
   };
@@ -238,8 +284,13 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       const result = created?.apply(this, arguments);
       const view = createConsoleView(this);
-      const widget = this.addDOMWidget('console_view', 'CONSOLE_VIEW', view.root, { serialize: false });
-      widget.computeSize = () => [this.size[0] - 16, Math.max(160, this.size[1] - 70)];
+      this.addDOMWidget('console_view', 'CONSOLE_VIEW', view.root, {
+        serialize: false,
+        // Growable DOM widget: the layout distributes all remaining node
+        // height to it (up to maxHeight). A fixed computeSize would leave a
+        // gap at the bottom of the node.
+        getMinHeight: () => 160
+      });
       const removed = this.onRemoved;
       this.onRemoved = function () {
         view.destroy();

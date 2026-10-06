@@ -20,6 +20,22 @@ def test_build_line_fields():
     assert isinstance(line["ts"], float)
 
 
+def test_build_line_cr_flag():
+    assert state.build_line("STDOUT", "x")["cr"] is False
+    assert state.build_line("STDOUT", "x", cr=True)["cr"] is True
+
+
+def test_cr_lines_replace_in_ring():
+    state.reset_for_tests()
+    state.enqueue(state.build_line("STDOUT", "10%", cr=True))
+    state.enqueue(state.build_line("STDOUT", "20%", cr=True))
+    state.enqueue(state.build_line("STDOUT", "done"))
+    assert [line["text"] for line in state.ring()] == ["done"]
+    state.enqueue(state.build_line("STDOUT", "after"))
+    state.enqueue(state.build_line("STDOUT", "30%", cr=True))
+    assert [line["text"] for line in state.ring()] == ["done", "after", "30%"]
+
+
 def test_ring_is_bounded():
     state.reset_for_tests(buffer_size=3)
     for i in range(5):

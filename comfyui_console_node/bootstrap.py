@@ -42,7 +42,7 @@ def _seed_from_app_logger() -> int:
         except AttributeError:
             continue
         for raw in str(chunk).split("\n"):
-            text = raw.rstrip("\r")
+            text = capture.strip_ansi(raw.rstrip("\r"))
             if "\r" in text:
                 text = text.split("\r")[-1]
             if not text:

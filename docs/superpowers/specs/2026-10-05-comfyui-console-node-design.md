@@ -10,6 +10,11 @@
 - `\r` progress chunks collapse to their final overwrite state, matching how the terminal displays them.
 - The node/extension use the V3 API (`comfy_api.latest`), the same mechanism as the working `ComfyUI-Prompt-Cast` pack.
 
+**Revision 1.2 (2026-10-05):** Live-testing fixes (smoke run on the real server):
+- `\r` in-place updates (tqdm progress bars) are now streamed **live** with a `cr` flag instead of being collapsed until the next newline. Viewers replace the previous open `cr` line (terminal overwrite semantics); the ring applies the same replace rule; the disk log keeps only finished lines. This is what made sampling progress invisible until 100% before.
+- ANSI escape sequences (colors, OSC links) are stripped from captured text.
+- The canvas widget is a **growable** DOM widget (no `computeSize` override; `getMinHeight` option) so it fills the node exactly — the earlier fixed height left a gap at the bottom of the node.
+
 ## Purpose
 
 A ComfyUI custom-node pack that mirrors the ComfyUI Python server's stdout/stderr to a node on the canvas. The node is a debugging display: filterable, level-colored, with a small rotating on-disk log so users can `tail` history outside the canvas. UI-only — no workflow outputs.
@@ -88,6 +93,7 @@ class LogLine(TypedDict):
     level: LogLevel
     source: LogSource
     text: str          # single line, no trailing newline
+    cr: bool           # True when this is an in-place update (progress bar)
 
 LevelFilter = Literal["ALL", "INFO", "WARN", "ERROR"]
 

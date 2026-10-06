@@ -18,7 +18,7 @@ def clean(monkeypatch):
 def make_sink():
     seen = []
 
-    def sink(level, text, source="external", via_logging=False):
+    def sink(level, text, source="external", via_logging=False, cr=False):
         seen.append((level, text, source))
 
     return seen, sink
@@ -58,6 +58,7 @@ def install_test_proxy(monkeypatch):
         ("stdout", "WARNING: deprecated config option", "WARN"),
         ("stdout", "INFO: started server", "INFO"),
         ("stdout", "regular output", "STDOUT"),
+        ("stdout", "[INFO] setup plugin", "INFO"),
         ("stderr", "no tokens here", "STDERR"),
     ],
 )
@@ -97,12 +98,33 @@ def test_install_is_idempotent(monkeypatch):
     assert sys.stdout is first
 
 
-def test_carriage_returns_collapse_to_final_state(monkeypatch, sink):
+def test_carriage_returns_emit_live(monkeypatch):
+    state.reset_for_tests()
+    capture.reset_for_tests()
+    seen = []
+    monkeypatch.setattr(
+        capture,
+        "_publish",
+        lambda level, text, source="external", via_logging=False, cr=False: seen.append((level, text, cr)),
+    )
+    swap_streams(monkeypatch)
+    assert capture.install_proxy() is True
+    sys.stdout.write("Loading 10%\r")
+    sys.stdout.write("Loading 20%\r")
+    sys.stdout.write("done\n")
+    sys.stdout.write("crlf line\r\n")
+    assert seen == [
+        ("STDOUT", "Loading 10%", True),
+        ("STDOUT", "Loading 20%", True),
+        ("STDOUT", "done", False),
+        ("STDOUT", "crlf line", False),
+    ]
+
+
+def test_ansi_codes_stripped(monkeypatch, sink):
     install_test_proxy(monkeypatch)
-    sys.stdout.write("Loading 10%\rLoading 20%\rLoading 100%")
-    assert sink == []
-    sys.stdout.write("\n")
-    assert sink == [("STDOUT", "Loading 100%", "external")]
+    sys.stdout.write("\x1b[32m[INFO]\x1b[0m hello\n")
+    assert sink == [("INFO", "[INFO] hello", "external")]
 
 
 def test_emit_notice_is_tagged_internal(monkeypatch, sink):

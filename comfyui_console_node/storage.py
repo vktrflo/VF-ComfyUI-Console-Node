@@ -58,6 +58,10 @@ def format_line(line: dict) -> str:
 def append(line: dict) -> None:
     global _written
     with _lock:
+        if line.get("cr"):
+            # In-place progress updates are not persisted; the finished line
+            # (or the next completed line) is what the disk log keeps.
+            return
         if _handle is None:
             raise RuntimeError("console-node storage is not initialized")
         text = format_line(line) + "\n"

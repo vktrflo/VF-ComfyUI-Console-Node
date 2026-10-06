@@ -38,6 +38,15 @@ def test_rotation_and_backup_pruning(tmp_path, monkeypatch):
     assert f"{constants.LOG_FILE_NAME}.3" not in names
 
 
+def test_cr_lines_are_not_persisted(tmp_path):
+    storage.init(tmp_path)
+    storage.append(state.build_line("STDOUT", "10%", cr=True))
+    storage.append(state.build_line("STDOUT", "done"))
+    content = (tmp_path / constants.LOG_FILE_NAME).read_text(encoding="utf-8")
+    assert "10%" not in content
+    assert "done" in content
+
+
 def test_append_after_close_raises(tmp_path):
     storage.init(tmp_path)
     storage.close()
