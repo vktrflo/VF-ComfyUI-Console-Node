@@ -8,7 +8,17 @@ const LEVEL_RANK = { ERROR: 3, WARN: 2, INFO: 1, STDOUT: 0, STDERR: 0 };
 const THRESHOLDS = { ALL: -1, INFO: 1, WARN: 2, ERROR: 3 };
 
 const STYLE = `
-.cn-root { display:flex; flex-direction:column; width:100%; height:100%; font-family:ui-monospace, Consolas, monospace; font-size:11px; color:var(--fg-color,#ddd); }
+.cn-root { display:flex; flex-direction:column; width:100%; height:100%; font-family:ui-monospace, Consolas, monospace; font-size:11px; color:var(--fg-color,#ddd); max-height:max(160px, calc(var(--node-height, 100000px) - 72px)); }
+/* Nodes 2.0 (Vue) mode: the renderer gives DOM widgets no height constraint
+   and sizes the node from measured content, so an unclamped log (flex fill
+   with overflow:auto) contributes its entire content height and balloons the
+   node. The Vue renderer sets --node-height (px, including the title bar) on
+   the node element; it inherits down to this element, so clamp the console to
+   it minus the node chrome (36px header + body top, 36px body bottom +
+   badges/footer, measured at the default node size) so the log scrolls
+   instead. The 160px floor keeps the console usable when the node is dragged
+   small. In legacy mode --node-height is absent and the fallback keeps the
+   clamp inert (the legacy layout sizes the element itself). */
 .cn-bar { display:flex; gap:4px; padding:4px 4px 2px 4px; flex-wrap:wrap; align-items:center; }
 .cn-bar input, .cn-bar select, .cn-bar button { font-size:11px; background:rgba(0,0,0,0.25); color:inherit; border:1px solid var(--border-color,#444); border-radius:4px; padding:1px 6px; }
 .cn-bar button { cursor:pointer; }
