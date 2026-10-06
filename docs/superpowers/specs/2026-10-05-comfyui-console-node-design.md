@@ -121,7 +121,7 @@ class LineFilter(TypedDict):
 
 ## Error handling
 
-- **Ring overflow**: ring trims oldest; one `WARN` line emitted to original stdout.
+- **Ring overflow**: ring trims oldest (no synthetic entries in the ring); a one-time `WARN` line is delivered to live viewers instead.
 - **Client disconnect mid-stream**: SSE handler catches `ConnectionResetError`/`CancelledError`, removes the queue from `_clients`, closes the response. Reconnects auto-replay the ring.
 - **Write to disk fails** (full disk, perms): proxy logs one `ERROR` via the original stdout (never recurses), then drops disk writes silently until next successful write. ComfyUI is never crashed by a logging failure.
 - **Filter regex invalid on subscribe**: server returns `400`; widget shows red badge on filter input.

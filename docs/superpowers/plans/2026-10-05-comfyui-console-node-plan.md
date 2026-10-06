@@ -2232,3 +2232,19 @@ git status
 - Run tests from the repo root with `.venv/Scripts/python.exe -m pytest -q`; every task's "Run to verify" step defines done.
 - Do not add runtime dependencies; do not import ComfyUI modules (`server`, `folder_paths`, `comfy_api`) at top level outside `nodes.py`/`bootstrap.py`'s guarded imports.
 - Keep code and tests exactly consistent with this plan; if a deviation is genuinely required, note it in the task report.
+
+---
+
+## Inline-execution deviations (recorded 2026-10-05)
+
+Implemented inline (not via subagents). Three deviations from the code above; the repository code is authoritative:
+
+1. **`state.enqueue` overflow notice** (Task 3): the one-time `WARN` for ring overflow is now delivered to live viewers only — it is no longer appended into the ring (appending it evicted one real line and polluted the backlog on any >2000-line session).
+2. **pytest capture interaction** (Tasks 5/8): pytest restores `sys.stdout`/`sys.stderr` at the setup→call phase boundary, so stream swaps made inside fixtures never reach the test body. `tests/test_capture.py` and `tests/test_bootstrap.py` therefore swap streams in the test body via `swap_streams()` / `install_test_proxy()` helpers.
+3. **Pass-through test** (Task 5): `test_proxy_passes_through_to_original` stubs `storage.append` so the one-time "disk log unavailable" notice cannot leak into the asserted stream.
+
+### Task 12 status
+
+- Full suite: **45 passed**.
+- Deployed to `D:\VectorFlow\custom_nodes\ComfyUI-Console-Node` and verified on disk.
+- Canvas smoke (steps 3–6) pending a ComfyUI restart — custom nodes load at server startup.
