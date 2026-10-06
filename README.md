@@ -1,4 +1,4 @@
-# ComfyUI-Console-Node
+# VF-ComfyUI-Console-Node
 
 Mirror the ComfyUI server console (stdout/stderr + `logging`) into a node on
 the canvas. Filter it, color-code it by level, pause/clear it, copy lines —
@@ -6,13 +6,13 @@ and keep a rotating copy on disk for grep.
 
 ## Install
 
-Copy this repository into `<ComfyUI>/custom_nodes/ComfyUI-Console-Node` (or
+Copy this repository into `<ComfyUI>/custom_nodes/VF-ComfyUI-Console-Node` (or
 run `python tools/deploy.py [target]`, default target
 `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes`). Restart ComfyUI.
 
 ## Use
 
-Add node → `utils/debug` → **Console Log Viewer**. Drop it anywhere on the
+Add node → `utils/debug` → **🌀 VF Console Log Viewer**. Drop it anywhere on the
 canvas; it does not need to be connected to anything.
 
 - `ALL / INFO / WARN / ERROR` — level filter

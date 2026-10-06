@@ -10,7 +10,7 @@ class ConsoleLogViewer(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="ConsoleLogViewer",
-            display_name="Console Log Viewer",
+            display_name="🌀 VF Console Log Viewer",
             category="utils/debug",
             inputs=[],
             outputs=[],

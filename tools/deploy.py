@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-PACK_NAME = "ComfyUI-Console-Node"
+PACK_NAME = "VF-ComfyUI-Console-Node"
 SKIP_NAMES = {"__pycache__", ".git", ".venv", "docs", "tests", "tools", ".pytest_cache"}
 DEFAULT_TARGETS = [Path("E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes")]
 

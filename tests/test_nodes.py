@@ -50,7 +50,7 @@ def test_schema_shape(nodes_module):
     module, _ = nodes_module
     schema = module.ConsoleLogViewer.define_schema()
     assert schema.node_id == "ConsoleLogViewer"
-    assert schema.display_name == "Console Log Viewer"
+    assert schema.display_name == "🌀 VF Console Log Viewer"
     assert schema.category == "utils/debug"
     assert schema.is_output_node is True
     assert schema.inputs == []

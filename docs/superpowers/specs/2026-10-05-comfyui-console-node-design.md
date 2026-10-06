@@ -1,7 +1,7 @@
 # ComfyUI Console Node — Design Spec
 
 **Date:** 2026-10-05
-**Target repo:** `E:\projects\ComfyUI-Console-Node`
+**Target repo:** `E:\projects\VF-ComfyUI-Console-Node`
 **Status:** Approved design; plan written at `docs/superpowers/plans/2026-10-05-comfyui-console-node-plan.md`
 
 **Revision 1.1 (2026-10-05):** Capture design amended during plan-stage research against the live ComfyUI install:
@@ -14,6 +14,10 @@
 - `\r` in-place updates (tqdm progress bars) are now streamed **live** with a `cr` flag instead of being collapsed until the next newline. Viewers replace the previous open `cr` line (terminal overwrite semantics); the ring applies the same replace rule; the disk log keeps only finished lines. This is what made sampling progress invisible until 100% before. Open update states stream **the moment they are written** (zero lag — no one-refresh delay), for both `\r`-first (tqdm) and `\r`-last write styles, with exact-duplicate state suppression.
 - ANSI escape sequences (colors, OSC links) are stripped from captured text.
 - The canvas widget is a **growable** DOM widget (no `computeSize` override; `getMinHeight` option) so it fills the node exactly — the earlier fixed height left a gap at the bottom of the node.
+
+**Revision 1.4 (2026-10-06):** Publishing identity:
+- Project renamed `ComfyUI-Console-Node` → `VF-ComfyUI-Console-Node` (repo folder, deployed folder, registry node id `[project].name`); the canvas title is now "🌀 VF Console Log Viewer".
+- `pyproject.toml` gains `[project.urls]` and `[tool.comfy]` (PublisherId `vktrflo`, DisplayName) for registry publishing via `comfy node publish`.
 
 **Revision 1.3 (2026-10-06):** Shipped-behavior updates:
 - Nodes 2.0 (Vue renderer): the widget clamps itself to the node's `--node-height` minus chrome (160px floor), so the log scrolls instead of ballooning the node; the rule is inert under the legacy renderer where the var is absent.
@@ -41,7 +45,7 @@ A ComfyUI custom-node pack that mirrors the ComfyUI Python server's stdout/stder
 
 ## Architecture
 
-Three components in one Python package, deployed under `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/ComfyUI-Console-Node`.
+Three components in one Python package, deployed under `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/VF-ComfyUI-Console-Node`.
 
 1. **`capture.py` — StreamProxy + logging bridge + level classification**
    - Installs Python `StreamProxy` wrappers over `sys.stdout` and `sys.stderr` exactly once (idempotent via module-global `_installed`).
@@ -70,7 +74,7 @@ Three components in one Python package, deployed under `E:/comfyui_instances/SMA
    - Shows internal-source lines inline like any other line (no toggle).
 
 5. **`nodes.py` — `ConsoleLogViewer` (V3 API)**
-   - `io.Schema(node_id="ConsoleLogViewer", display_name="Console Log Viewer", category="utils/debug", inputs=[], outputs=[], is_output_node=True)`
+   - `io.Schema(node_id="ConsoleLogViewer", display_name="🌀 VF Console Log Viewer", category="utils/debug", inputs=[], outputs=[], is_output_node=True)`
    - `execute()` is a no-op returning `io.NodeOutput()`; the widget streams over SSE independently of execution.
    - `ConsoleNodeExtension(ComfyExtension)` returns `[ConsoleLogViewer]`; the pack uses the same `comfy_entrypoint()` mechanism as `ComfyUI-Prompt-Cast`.
 
@@ -110,7 +114,7 @@ class LineFilter(TypedDict):
 
 ### Startup
 
-1. ComfyUI imports `ComfyUI-Console-Node/__init__.py` → calls `comfy_entrypoint()`.
+1. ComfyUI imports `VF-ComfyUI-Console-Node/__init__.py` → calls `comfy_entrypoint()`.
 2. `comfy_entrypoint()` → `bootstrap.setup()`:
    - `capture.install_proxy()` — wraps stdout/stderr exactly once, chaining over ComfyUI's own `LogInterceptor`s.
    - `storage.init(<user_dir>/console-node)` — opens the rotating file.
@@ -163,7 +167,7 @@ class LineFilter(TypedDict):
 ## File layout
 
 ```
-ComfyUI-Console-Node/
+VF-ComfyUI-Console-Node/
 ├── __init__.py                    # comfy_entrypoint() + WEB_DIRECTORY
 ├── pyproject.toml                 # name, dev deps (pytest, pytest-asyncio, aiohttp); no runtime deps
 ├── README.md                      # install + usage + limitations
@@ -207,5 +211,5 @@ ComfyUI-Console-Node/
 
 ## Deployment
 
-- After implementation: deploy to `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/ComfyUI-Console-Node` (the SMALL_DESKTOP instance; the earlier `D:/VectorFlow/custom_nodes` location is retired).
-- `git init` happens at `E:\projects\ComfyUI-Console-Node\` per the user's instruction; no remote is set.
+- After implementation: deploy to `E:/comfyui_instances/SMALL_DESKTOP/ComfyUI/custom_nodes/VF-ComfyUI-Console-Node` (the SMALL_DESKTOP instance; the earlier `D:/VectorFlow/custom_nodes` location is retired).
+- `git init` happens at `E:\projects\VF-ComfyUI-Console-Node\` per the user's instruction; no remote is set.

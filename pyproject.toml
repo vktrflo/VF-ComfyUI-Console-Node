@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "comfyui-console-node"
+name = "VF-ComfyUI-Console-Node"
 version = "0.1.0"
 description = "Mirror the ComfyUI server console into a node on the canvas"
 requires-python = ">=3.10"
@@ -20,3 +20,13 @@ packages = ["comfyui_console_node"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+
+[project.urls]
+Repository = "https://github.com/vktrflo/VF-ComfyUI-Console-Node"
+"Bug Tracker" = "https://github.com/vktrflo/VF-ComfyUI-Console-Node/issues"
+
+[tool.comfy]
+# Publisher id from registry.comfy.org (globally unique; cannot be changed later).
+PublisherId = "vktrflo"
+DisplayName = "VF Console Log Viewer"
+# Icon = "https://raw.githubusercontent.com/vktrflo/VF-ComfyUI-Console-Node/main/icon.png"
