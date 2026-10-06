@@ -121,6 +121,28 @@ def test_carriage_returns_emit_live(monkeypatch):
     ]
 
 
+def test_cr_first_updates_are_live(monkeypatch):
+    """tqdm writes "\r" + bar-state: the NEW state must emit immediately."""
+    state.reset_for_tests()
+    capture.reset_for_tests()
+    seen = []
+    monkeypatch.setattr(
+        capture,
+        "_publish",
+        lambda level, text, source="external", via_logging=False, cr=False: seen.append((level, text, cr)),
+    )
+    swap_streams(monkeypatch)
+    assert capture.install_proxy() is True
+    sys.stdout.write("\r 25%| 1/4")
+    sys.stdout.write("\r 50%| 2/4")
+    sys.stdout.write("\r100%| 4/4\n")
+    assert seen == [
+        ("STDOUT", " 25%| 1/4", True),
+        ("STDOUT", " 50%| 2/4", True),
+        ("STDOUT", "100%| 4/4", False),
+    ]
+
+
 def test_ansi_codes_stripped(monkeypatch, sink):
     install_test_proxy(monkeypatch)
     sys.stdout.write("\x1b[32m[INFO]\x1b[0m hello\n")

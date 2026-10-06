@@ -11,7 +11,7 @@
 - The node/extension use the V3 API (`comfy_api.latest`), the same mechanism as the working `ComfyUI-Prompt-Cast` pack.
 
 **Revision 1.2 (2026-10-05):** Live-testing fixes (smoke run on the real server):
-- `\r` in-place updates (tqdm progress bars) are now streamed **live** with a `cr` flag instead of being collapsed until the next newline. Viewers replace the previous open `cr` line (terminal overwrite semantics); the ring applies the same replace rule; the disk log keeps only finished lines. This is what made sampling progress invisible until 100% before.
+- `\r` in-place updates (tqdm progress bars) are now streamed **live** with a `cr` flag instead of being collapsed until the next newline. Viewers replace the previous open `cr` line (terminal overwrite semantics); the ring applies the same replace rule; the disk log keeps only finished lines. This is what made sampling progress invisible until 100% before. Open update states stream **the moment they are written** (zero lag — no one-refresh delay), for both `\r`-first (tqdm) and `\r`-last write styles, with exact-duplicate state suppression.
 - ANSI escape sequences (colors, OSC links) are stripped from captured text.
 - The canvas widget is a **growable** DOM widget (no `computeSize` override; `getMinHeight` option) so it fills the node exactly — the earlier fixed height left a gap at the bottom of the node.
 

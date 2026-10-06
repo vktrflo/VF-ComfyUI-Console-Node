@@ -98,6 +98,8 @@ class StreamProxy:
         self._stream_name = stream_name
         self._buffer = ""
         self._buffer_lock = threading.Lock()
+        self._open_cr = False
+        self._last_open_text = ""
 
     # --- io compatibility -------------------------------------------------
     def write(self, text):
@@ -163,6 +165,7 @@ class StreamProxy:
                 if nl != -1 and (cr == -1 or nl < cr):
                     segment = self._buffer[:nl]
                     self._buffer = self._buffer[nl + 1:]
+                    self._open_cr = False
                     self._emit(segment, cr=False)
                 else:
                     segment = self._buffer[:cr]
@@ -170,11 +173,25 @@ class StreamProxy:
                     if self._buffer.startswith("\n"):
                         # CRLF: the line is finished, not an in-place update.
                         self._buffer = self._buffer[1:]
+                        self._open_cr = False
                         self._emit(segment, cr=False)
-                    elif segment:
-                        # Progress-bar style update: emit live; viewers replace
-                        # the previous line for this stream.
-                        self._emit(segment, cr=True)
+                    else:
+                        # \r overwrites the line: stream the pre-\r state unless
+                        # it was already emitted as the open update; whatever
+                        # follows the \r becomes the line's next open state.
+                        if segment != self._last_open_text:
+                            self._last_open_text = segment
+                            if segment:
+                                self._emit(segment, cr=True)
+                        self._open_cr = True
+            if self._open_cr and self._buffer:
+                # Stream the open update the moment it is written, so viewers
+                # track the console with zero lag instead of one refresh behind.
+                if self._buffer != self._last_open_text:
+                    self._last_open_text = self._buffer
+                    self._emit(self._buffer, cr=True)
+            elif not self._open_cr:
+                self._last_open_text = ""
 
     def _emit(self, raw: str, cr: bool = False):
         text = strip_ansi(raw.rstrip("\r"))
