@@ -84,10 +84,6 @@ function createConsoleView(node) {
   maxInput.style.width = '58px';
   maxInput.title = 'max lines held in the viewer';
 
-  const internalBtn = document.createElement('button');
-  internalBtn.textContent = 'int';
-  internalBtn.title = 'show internal (console-node) lines';
-
   const pauseBtn = document.createElement('button');
   pauseBtn.textContent = 'pause';
 
@@ -102,7 +98,7 @@ function createConsoleView(node) {
   stateLabel.className = 'cn-state';
   stateLabel.textContent = 'connecting…';
 
-  bar.append(levelSelect, filterInput, maxInput, internalBtn, pauseBtn, followBtn, clearBtn, stateLabel);
+  bar.append(levelSelect, filterInput, maxInput, pauseBtn, followBtn, clearBtn, stateLabel);
 
   const logEl = document.createElement('div');
   logEl.className = 'cn-log';
@@ -114,7 +110,6 @@ function createConsoleView(node) {
     maxLines: 2000,
     paused: false,
     follow: true,
-    showInternal: false,
     threshold: THRESHOLDS.ALL,
     regex: null,
     es: null,
@@ -124,7 +119,6 @@ function createConsoleView(node) {
   };
 
   const passes = (line) => {
-    if (!view.showInternal && line.source === 'internal') return false;
     if ((LEVEL_RANK[line.level] ?? 0) < view.threshold) return false;
     if (view.regex && !view.regex.test(line.text)) return false;
     return true;
@@ -235,11 +229,6 @@ function createConsoleView(node) {
     view.maxLines = Number.isFinite(value) ? Math.max(100, Math.min(20000, value)) : 2000;
     maxInput.value = String(view.maxLines);
     trim();
-    rebuild();
-  };
-  internalBtn.onclick = () => {
-    view.showInternal = !view.showInternal;
-    internalBtn.classList.toggle('on', view.showInternal);
     rebuild();
   };
   pauseBtn.onclick = () => {

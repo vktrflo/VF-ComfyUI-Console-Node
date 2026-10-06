@@ -17,7 +17,6 @@ canvas; it does not need to be connected to anything.
 
 - `ALL / INFO / WARN / ERROR` — level filter
 - filter box — case-insensitive regex applied to line text
-- `int` — show internal console-node lines (hidden by default)
 - `pause` — stop rendering (server keeps buffering)
 - `follow` — auto-scroll to newest line
 - `clear` — empty the viewer
@@ -36,7 +35,6 @@ canvas; it does not need to be connected to anything.
 | `COMFYUI_CONSOLE_NODE_CLIENT_QUEUE` | 5000 | per-viewer queue size (lines) |
 | `COMFYUI_CONSOLE_NODE_ROTATE_BYTES` | 5242880 | rotation threshold |
 | `COMFYUI_CONSOLE_NODE_MAX_BACKUPS` | 3 | rotated files kept |
-| `COMFYUI_CONSOLE_NODE_HIDE_INTERNAL` | 1 | hide internal lines by default |
 
 ## Behavior notes
 
@@ -44,6 +42,8 @@ canvas; it does not need to be connected to anything.
   the previous line** in the viewer — the bar you see is the current state,
   not a wall of updates. The disk log keeps only finished lines.
 - ANSI escape codes from the console (colors, links) are stripped.
+- Lines the node itself emits (`console-node:` startup notices, buffer
+  warnings) are shown inline like any other line.
 
 ## Limitations
 

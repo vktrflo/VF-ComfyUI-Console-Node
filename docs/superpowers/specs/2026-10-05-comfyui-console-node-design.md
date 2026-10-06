@@ -15,6 +15,10 @@
 - ANSI escape sequences (colors, OSC links) are stripped from captured text.
 - The canvas widget is a **growable** DOM widget (no `computeSize` override; `getMinHeight` option) so it fills the node exactly — the earlier fixed height left a gap at the bottom of the node.
 
+**Revision 1.3 (2026-10-06):** Shipped-behavior updates:
+- Nodes 2.0 (Vue renderer): the widget clamps itself to the node's `--node-height` minus chrome (160px floor), so the log scrolls instead of ballooning the node; the rule is inert under the legacy renderer where the var is absent.
+- Internal-source lines render inline like any other line: the `int` toolbar toggle is removed and the (previously unwired) `COMFYUI_CONSOLE_NODE_HIDE_INTERNAL` env var is dropped.
+
 ## Purpose
 
 A ComfyUI custom-node pack that mirrors the ComfyUI Python server's stdout/stderr to a node on the canvas. The node is a debugging display: filterable, level-colored, with a small rotating on-disk log so users can `tail` history outside the canvas. UI-only — no workflow outputs.
@@ -43,7 +47,7 @@ Three components in one Python package, deployed under `E:/comfyui_instances/SMA
    - Installs Python `StreamProxy` wrappers over `sys.stdout` and `sys.stderr` exactly once (idempotent via module-global `_installed`).
    - Attaches a `CaptureHandler` to the root and `comfy` loggers exactly once, because ComfyUI's own logging handlers bind their streams before this pack loads and would otherwise bypass the proxy entirely.
    - Buffers partial writes until newline; `\r` segments collapse to their final overwrite state (progress-bar semantics); classifies level from tokens (`ERROR`, `WARNING`, `WARN`, `Traceback`, `INFO`) falling back to the originating stream (stderr → STDERR, stdout → STDOUT).
-   - Tags internal lines (`source="internal"`) when the pack itself emitted them so the widget can hide them by default.
+   - Tags internal lines (`source="internal"`) when the pack itself emitted them, so the data distinguishes pack diagnostics from mirrored console output.
    - Hands each parsed line to `state.enqueue(line)` and `storage.append(line)` via a single `_publish()` choke point; exact duplicates arriving from both capture paths within 50 ms are suppressed.
 
 2. **`storage.py` — rotating file writer**
@@ -63,7 +67,7 @@ Three components in one Python package, deployed under `E:/comfyui_instances/SMA
    - Subscribes via `EventSource`; auto-reconnects with exponential backoff.
    - UI controls: filter (regex/substring), level filter (ALL/INFO/WARN/ERROR), pause, clear, auto-scroll toggle.
    - Color-codes lines by level; clickable timestamps copy the line text to clipboard.
-   - Default hides internal-source lines; user can toggle "Show internal" in the widget menu.
+   - Shows internal-source lines inline like any other line (no toggle).
 
 5. **`nodes.py` — `ConsoleLogViewer` (V3 API)**
    - `io.Schema(node_id="ConsoleLogViewer", display_name="Console Log Viewer", category="utils/debug", inputs=[], outputs=[], is_output_node=True)`
@@ -121,7 +125,7 @@ class LineFilter(TypedDict):
 
 1. `print(...)` writes hit the `StreamProxy`; `logging` records hit the `CaptureHandler` (ComfyUI's own logging handlers pre-date the proxy and bypass it). Diagnostics from the pack itself are tagged `source="internal"`.
 2. Both paths normalize the text (buffer until newline; `\r` collapses to its final overwrite) and classify the level.
-3. `_publish()` appends the line to the rotating file — internal-source lines **are** persisted to disk for completeness; only the widget hides them by default.
+3. `_publish()` appends the line to the rotating file — internal-source lines **are** persisted to disk and displayed like any other line.
 4. `_publish()` appends to the ring and fans out to every viewer queue: oldest evicted on ring overflow; a full viewer queue drops its oldest pending line once, then stays silent.
 5. Each connected SSE handler drains its viewer queue and writes `event: line\ndata: <json>\n\n` to its response.
 
@@ -135,7 +139,7 @@ class LineFilter(TypedDict):
 - **Reload safety**: `install_proxy()` checks `_proxy_installed` and reuses the existing wrapper if present, so ComfyUI's node hot-reload never stacks stdout calls. `attach_logging()` and the pre-load seed are likewise once-only.
 - **Duplicate capture**: if a logging handler is ever created after the proxy is installed, its output would pass both capture paths; an exact-duplicate guard (same text from the non-logging path within 50 ms) suppresses the second copy. A single record delivered to the handler via multiple loggers is deduped by record identity.
 - **Pre-load history**: recovered only on ComfyUI builds that keep `app.logger.get_logs()`; otherwise capture starts at pack load and the internal "capture started" notice marks the boundary.
-- **Internal-source noise**: proxy tags its own diagnostic lines `source="internal"`; widget hides them by default; togglable via "Show internal" menu item. Internal-source lines are still persisted to the on-disk log.
+- **Internal-source lines**: proxy tags its own diagnostic lines `source="internal"`; the widget shows them inline (no toggle) and they are persisted to the on-disk log.
 - **Pause**: pause is implemented client-side in the widget only — the server keeps writing the ring, fanning out, and persisting to disk. The viewer simply stops rendering incoming lines until unpaused. Pause is per-viewer, not global.
 - **Level filter**: the widget's level dropdown accepts `ALL` (show every level regardless of `level_min`) in addition to the four log levels. The server-side backlog filter accepts only real levels — `ALL` is a client-only convenience applied after replay.
 
@@ -200,7 +204,6 @@ ComfyUI-Console-Node/
 | `COMFYUI_CONSOLE_NODE_BUFFER` | `2000` | Max lines held in the in-memory ring. |
 | `COMFYUI_CONSOLE_NODE_ROTATE_BYTES` | `5242880` | Rotate the on-disk log when it exceeds this size. |
 | `COMFYUI_CONSOLE_NODE_MAX_BACKUPS` | `3` | Number of rotated backups to keep. |
-| `COMFYUI_CONSOLE_NODE_HIDE_INTERNAL` | `1` | When `1`, widget hides `source="internal"` lines by default. |
 
 ## Deployment
 
