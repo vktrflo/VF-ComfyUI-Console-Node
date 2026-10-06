@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "comfyui-console-node"
+version = "0.1.0"
+description = "Mirror the ComfyUI server console into a node on the canvas"
+requires-python = ">=3.10"
+dependencies = []
+license = "MIT"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "aiohttp"]
+
+[tool.setuptools]
+packages = ["comfyui_console_node"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
