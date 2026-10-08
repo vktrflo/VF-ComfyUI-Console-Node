@@ -3,30 +3,37 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "VF-ComfyUI-Console-Node"
-version = "0.1.0"
-description = "Mirror the ComfyUI server console into a node on the canvas"
+name = "vf-comfyui-console-node"
+version = "1.0.0"
+description = "Mirror the ComfyUI server console into a filterable node on the canvas"
+readme = "README.md"
 requires-python = ">=3.10"
+license = { file = "LICENSE" }
 dependencies = []
-license = "MIT"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "aiohttp"]
-
-[tool.setuptools]
-packages = ["comfyui_console_node"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-testpaths = ["tests"]
 
 [project.urls]
 Repository = "https://github.com/vktrflo/VF-ComfyUI-Console-Node"
 "Bug Tracker" = "https://github.com/vktrflo/VF-ComfyUI-Console-Node/issues"
 
+[tool.setuptools]
+packages = ["comfyui_console_node"]
+
+# Comfy Registry — https://registry.comfy.org
+# PublisherId forms the public node URL and cannot be changed after the first
+# publish, so it is pinned here rather than templated.
 [tool.comfy]
-# Publisher id from registry.comfy.org (globally unique; cannot be changed later).
 PublisherId = "vktrflo"
 DisplayName = "VF Console Log Viewer"
-# Icon = "https://raw.githubusercontent.com/vktrflo/VF-ComfyUI-Console-Node/main/icon.png"
+Icon = "https://raw.githubusercontent.com/vktrflo/VF-ComfyUI-Console-Node/main/icon.png"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

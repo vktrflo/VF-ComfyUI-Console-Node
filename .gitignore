@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+
+# Demo recording scratch: raw .webm captures, extracted frames, server logs.
+# The finished GIFs under docs/media/ ARE tracked.
+.recording/
