@@ -1,0 +1,26 @@
+# Files excluded from the Comfy Registry archive.
+#
+# This layers on top of .gitignore, so anything not tracked by git is already
+# left out. Use this file to drop files that ARE tracked but should not ship.
+
+# docs/media/ is deliberately KEPT. The README references those GIFs, and
+# shipping them means the registry page renders correctly whether it reads the
+# README from this archive or straight from GitHub. Development notes now live
+# outside docs/ entirely, in .development/.
+
+# Internal design documents and development notes.
+.development/
+
+# Tests and development tooling.
+tests/
+tools/
+conftest.py
+
+# Recording scratch: raw .webm captures, extracted frames, server logs.
+.recording/
+
+# Local environments and caches.
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
