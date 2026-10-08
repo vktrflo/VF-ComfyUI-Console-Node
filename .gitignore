@@ -6,3 +6,8 @@ __pycache__/
 # Demo recording scratch: raw .webm captures, extracted frames, server logs.
 # The finished GIFs under docs/media/ ARE tracked.
 .recording/
+
+# Internal development notes: design specs, implementation plans, and the
+# dev workflow write-up. Local-only -- kept out of GitHub and out of the
+# registry archive.
+.development/
